@@ -8,3 +8,8 @@ This repository contains a range of Zig examples, including:
 
 
 You can find the main demos [here](https://asecuritysite.com/zig).
+
+[![Watch the video]([https://raw.githubusercontent.com/username/repository/branch/path/to/thumbnail.jpg)](https://raw.githubusercontent.com/username/repository/branch/path/to/video.mp4](https://youtu.be/Hx06ql-bFwQ?si=wYfIkmqp_maO6RGw))
+
+
+
