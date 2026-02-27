@@ -1,0 +1,1 @@
+zig build-exe zig_openssl_argon2.zig -I C:\openssl\include\ -lc libcrypto.lib -target x86_64-windows
