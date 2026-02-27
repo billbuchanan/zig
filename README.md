@@ -9,7 +9,7 @@ This repository contains a range of Zig examples, including:
 
 You can find the main demos [here](https://asecuritysite.com/zig).
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/wYfIkmqp_maO6RGw/0.jpg)](https://youtu.be/Hx06ql-bFwQ?si=wYfIkmqp_maO6RGw)
+[![Zig and Cryptography](https://img.youtube.com/vi/wYfIkmqp_maO6RGw/0.jpg)](https://youtu.be/Hx06ql-bFwQ?si=wYfIkmqp_maO6RGw)
 
 
 
