@@ -1,0 +1,1 @@
+zig build-exe zig_liboqs_mldsa.zig -I C:\home\liboqs\build\include  -lc liboqs.lib -target x86_64-windows
