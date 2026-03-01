@@ -145,7 +145,7 @@ pub fn main() !void {
     try stdout.print("SHA3-256:\t{x}\n", .{out256[0..]});
     try stdout.print("SHA3-384:\t{x}\n", .{out384[0..]});
     try stdout.print("SHA3-512:\t{x}\n", .{out512[0..]});
-    try stdout.print("RIPEMD:\t{x}\n", .{ripemd_out[0..]});
+    try stdout.print("RIPEMD:\t\t{x}\n", .{ripemd_out[0..]});
     try stdout.print("Blake2b:\t{x}\n", .{outblake2b[0..]});
     try stdout.print("Blake2s:\t{x}\n", .{outblake2s[0..]});
 
