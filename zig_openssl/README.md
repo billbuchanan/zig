@@ -1,6 +1,8 @@
 # Zig and OpenSSL
 
-Zig provides an excellent integration with C programs, and where we can use C header files to compile our Zig code, and then link-in with a static library. In this case, we will integrate with OpenSSL header files, and then link this with the libstatic.lib library. The advantage of using Zig is that it has improved robustness against memory security issues that we would find with C. Other examples with Zig are [here].
+Zig provides an excellent integration with C programs, and where we can use C header files to compile our Zig code, and then link-in with a static library. In this case, we will integrate with OpenSSL header files, and then link this with the libstatic.lib library. The advantage of using Zig is that it has improved robustness against memory security issues that we would find with C.
+
+Demo applications are [here](https://asecuritysite.com/zig).
 
 ## Hashing
 

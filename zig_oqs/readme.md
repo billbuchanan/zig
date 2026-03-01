@@ -1,4 +1,7 @@
 # Zig and Liboqs
+
+Demo applications are [here](https://asecuritysite.com/zig).
+
 Compilation:
 
 ```
