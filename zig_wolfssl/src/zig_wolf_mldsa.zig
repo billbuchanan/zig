@@ -35,7 +35,7 @@ pub fn main() !void {
     try wcOk(c.wc_InitRng(&rng), "wc_InitRng");
     defer _ = c.wc_FreeRng(&rng);
 
-    // Key
+    // Generate ML-DSA Key Pair
     var key: c.MlDsaKey = undefined;
     try wcOk(c.wc_MlDsaKey_Init(&key, null, c.INVALID_DEVID), "Dilithium key init");
     defer _ = c.wc_MlDsaKey_Free(&key);
@@ -55,23 +55,23 @@ pub fn main() !void {
     try wcOk(c.wc_MlDsaKey_ExportPubRaw(&key, pk[0..].ptr, &pub_len), "ML-DSA Public Export");
     const pk_bytes = pk[0..@intCast(pub_len)];
 
+    // Export Private Key
     var sk: [16384]u8 = undefined; // reserve enough space for sk
     var sk_len: c_uint = sk.len;
     try wcOk(c.wc_MlDsaKey_ExportPrivRaw(&key, sk[0..].ptr, &sk_len), "ML-DSA Private Export");
 
-    // Sign
+    // Sign Message
     var sig_size: usize = @intCast(c.DILITHIUM_LEVEL2_SIG_SIZE);
     if (level == 3) sig_size = @intCast(c.DILITHIUM_LEVEL3_SIG_SIZE);
     if (level == 5) sig_size = @intCast(c.DILITHIUM_LEVEL5_SIG_SIZE);
 
     const sig = try allocator.alloc(u8, sig_size);
     defer allocator.free(sig);
-    // var sig_len: c_uint = 0;
     const msg_len: c_uint = @intCast(msg.len);
     var sig_len: c_uint = @intCast(sig.len);
     try wcOk(c.wc_MlDsaKey_Sign(&key, sig.ptr, &sig_len, msg.ptr, msg_len, &rng), "sign");
 
-    // Verify
+    // Verify signature
     var ver: c_int = 0;
     try wcOk(c.wc_MlDsaKey_Verify(&key, sig.ptr, sig_len, msg, msg_len, &ver), "verify");
 
