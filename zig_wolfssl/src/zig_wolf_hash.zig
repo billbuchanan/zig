@@ -7,6 +7,7 @@ const c = @cImport({
     @cInclude("wolfssl/wolfcrypt/error-crypt.h");
 
     // Classic hashes
+    @cInclude("wolfssl/wolfcrypt/md2.h");
     @cInclude("wolfssl/wolfcrypt/md4.h");
     @cInclude("wolfssl/wolfcrypt/md5.h");
     @cInclude("wolfssl/wolfcrypt/sha.h");
@@ -41,6 +42,12 @@ pub fn main() !void {
     const msg = args[1];
 
     try stdout.print("Message: {s}\n\n", .{msg});
+
+    var md2: c.Md2 = undefined;
+    var md2_out: [c.MD2_DIGEST_SIZE]u8 = undefined;
+    _ = c.wc_InitMd2(&md2);
+    _ = c.wc_Md2Update(&md2, msg.ptr, @intCast(msg.len));
+    _ = c.wc_Md2Final(&md2, &md2_out);
 
     var md4: c.Md4 = undefined;
     var md4_out: [c.MD4_DIGEST_SIZE]u8 = undefined;
@@ -84,6 +91,13 @@ pub fn main() !void {
     try testOkay(c.wc_InitSha256(&sha256), "wc_InitSha256");
     try testOkay(c.wc_Sha256Update(&sha256, msg.ptr, @intCast(msg.len)), "wc_Sha256Update");
     try testOkay(c.wc_Sha256Final(&sha256, &sha256_out), "wc_Sha256Final");
+
+    var sha384: c.Sha384 = undefined;
+    defer _ = c.wc_Sha384Free(&sha384);
+    var sha384_out: [c.SHA384_DIGEST_SIZE]u8 = undefined;
+    try testOkay(c.wc_InitSha384(&sha384), "wc_InitSha384");
+    try testOkay(c.wc_Sha384Update(&sha384, msg.ptr, @intCast(msg.len)), "wc_Sha384Update");
+    try testOkay(c.wc_Sha384Final(&sha384, &sha384_out), "wc_Sha384Final");
 
     var sha512: c.Sha512 = undefined;
     defer _ = c.wc_Sha512Free(&sha512);
@@ -135,16 +149,18 @@ pub fn main() !void {
     try testOkay(c.wc_Blake2sUpdate(&blake2s, msg.ptr, @intCast(msg.len)), "wc_wc_InitBake2s_Update");
     try testOkay(c.wc_Blake2sFinal(&blake2s, &outblake2s, c.WC_BLAKE2S_DIGEST_SIZE), "wc_wc_InitBake2s_Final");
 
+    try stdout.print("MD2:\t\t{x}\n", .{md2_out[0..]});
     try stdout.print("MD4:\t\t{x}\n", .{md4_out[0..]});
     try stdout.print("MD5:\t\t{x}\n", .{md5_out[0..]});
-    try stdout.print("SHA-1:\t\t{x}\n", .{sha1_out[0..]});
+    try stdout.print("SHA-1:\t\t{x}\n\n", .{sha1_out[0..]});
     try stdout.print("SHA-224:\t{x}\n", .{sha224_out[0..]});
     try stdout.print("SHA-256:\t{x}\n", .{sha256_out[0..]});
-    try stdout.print("SHA-512:\t{x}\n", .{sha512_out[0..]});
+    try stdout.print("SHA-384:\t{x}\n", .{sha384_out[0..]});
+    try stdout.print("SHA-512:\t{x}\n\n", .{sha512_out[0..]});
     try stdout.print("SHA3-224:\t{x}\n", .{out224[0..]});
     try stdout.print("SHA3-256:\t{x}\n", .{out256[0..]});
     try stdout.print("SHA3-384:\t{x}\n", .{out384[0..]});
-    try stdout.print("SHA3-512:\t{x}\n", .{out512[0..]});
+    try stdout.print("SHA3-512:\t{x}\n\n", .{out512[0..]});
     try stdout.print("RIPEMD:\t\t{x}\n", .{ripemd_out[0..]});
     try stdout.print("Blake2b:\t{x}\n", .{outblake2b[0..]});
     try stdout.print("Blake2s:\t{x}\n", .{outblake2s[0..]});
