@@ -14,12 +14,6 @@ fn wcOk(rc: c_int, what: []const u8) !void {
     return error.WolfCryptError;
 }
 
-fn printHex(w: anytype, label: []const u8, data: []const u8) !void {
-    try w.print("{s} ({d} bytes): ", .{ label, data.len });
-    for (data) |b| try w.print("{x:0>2}", .{b});
-    try w.writeByte('\n');
-}
-
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
