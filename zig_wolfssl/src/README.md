@@ -1,3 +1,4 @@
+# ML-DSA
 To build:
 
 ```
@@ -45,4 +46,35 @@ and the user_settings.h file is:
 /* Make sure these are NOT enabled */ 
 #undef WOLFSSL_SMALL_STACK 
 #undef WOLFSSL_ECC_POINT_IS_OPAQUE
+```
+
+# ML-KEM
+Unfortunately, the WolfSSL ML-KEM structure is opaque, and which does not expose the size of the key. We thus have to create a wrapper for this (mlkem_wrap.c):
+
+```
+#include <wolfssl/wolfcrypt/mlkem.h>
+
+
+MlKemKey* mlkem_new(int type) {
+    MlKemKey* k = (MlKemKey*)XMALLOC(sizeof(MlKemKey), NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    if (k == NULL) return NULL;
+    if (wc_MlKemKey_Init(k, type, NULL, INVALID_DEVID) != 0) {
+        XFREE(k, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+        return NULL;
+    }
+    return k;
+}
+
+int mlkem_delete(MlKemKey* k) {
+    if (k == NULL) return 0;
+    (void)wc_MlKemKey_Free(k);
+    XFREE(k, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+    return 0;
+}
+```
+
+We also need to integrate liboqs.a, and can then compile with:
+
+```
+zig build-exe zig_wolf_mlkem.zig  C:\home\wolfssl-master\wolfcrypt\src\mlkem_wrap.c -lc -IC:\home\wolfssl-master libwolfssl.a  -target x86_64-windows-gnu liboqs.a -lws2_32
 ```
