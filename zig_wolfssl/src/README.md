@@ -1,4 +1,24 @@
-# ML-DSA
+# WolfSSL/WolfCrypt
+To integrate WolfSSL/WolfCrypt with Zig, we need to build a static library (libwolfssl.a) and link it into our project.  We build the library with, we go to the root folder for WolfSSL/WolfCrypt, and then:
+
+```
+mkdir build
+cd build
+cmake -G Ninja  -DBUILD_SHARED_LIBS=OFF -DWOLFSSL_USER_SETTINGS=yes ..
+```
+
+and then:
+
+```
+ninja
+```
+This should build a file called libwolfssl.a, we can then copy this into a local folder, or put it in a library folder. To build for Microsoft Windows, we then define the include folder and link in the library with:
+
+```
+zig build-exe zig_wolf_mldsa.zig -lc -IC:\home\wolfssl-master libwolfssl.a  -target x86_64-windows-gnu -lws2_32
+```
+
+## ML-DSA
 To build:
 
 ```
@@ -47,8 +67,8 @@ and the user_settings.h file is:
 #undef WOLFSSL_SMALL_STACK 
 #undef WOLFSSL_ECC_POINT_IS_OPAQUE
 ```
-
-# ML-KEM
+A test case is [here](https://asecuritysite.com/zig_wolf/zig_wolfssl_mldsa).
+## ML-KEM
 Unfortunately, the WolfSSL ML-KEM structure is opaque, and which does not expose the size of the key. We thus have to create a wrapper for this (mlkem_wrap.c):
 
 ```
@@ -78,8 +98,8 @@ We also need to integrate liboqs.a, and can then compile with:
 ```
 zig build-exe zig_wolf_mlkem.zig  C:\home\wolfssl-master\wolfcrypt\src\mlkem_wrap.c -lc -IC:\home\wolfssl-master libwolfssl.a  -target x86_64-windows-gnu liboqs.a -lws2_32
 ```
-
-# X25519
+A test case is [here](https://asecuritysite.com/zig_wolf/zig_wolfssl_mlkem).
+## X25519
 Unfortunately, the WolfSSL X25519 structure is opaque, and which does not expose the size of the key. We thus have to create a wrapper for this (x25519_wrap.c):
 
 ```
@@ -154,3 +174,4 @@ We can then compile with:
 ```
 zig build-exe zig_wolf_x25519.zig  C:\home\wolfssl-master\wolfcrypt\src\x25519_wrap.c -lc -IC:\home\wolfssl-master libwolfssl.a  -target x86_64-windows-gnu  -lws2_32
 ```
+A test case is [here](https://asecuritysite.com/zig_wolf/zig_wolf_x25519).
