@@ -1,5 +1,5 @@
 # WolfSSL/WolfCrypt
-To integrate WolfSSL/WolfCrypt with Zig, we need to build a static library (libwolfssl.a) and link it into our project.  We build the library with, we go to the root folder for WolfSSL/WolfCrypt, and then:
+Examples of using WolfSSL/WolfCrypt are [here](https://asecuritysite.com/wolfcrypt). To integrate WolfSSL/WolfCrypt with Zig, we need to build a static library (libwolfssl.a) and link it into our project.  We build the library with, we go to the root folder for WolfSSL/WolfCrypt, and then:
 
 ```
 mkdir build
