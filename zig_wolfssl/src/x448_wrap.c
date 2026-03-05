@@ -1,4 +1,5 @@
 // curve448_wrap.c
+
 #define WOLFSSL_USER_SETTINGS
 #include <wolfssl/wolfcrypt/settings.h>
 
@@ -7,7 +8,9 @@
 #include <wolfssl/wolfcrypt/random.h>
 #include <wolfssl/wolfcrypt/curve448.h>
 
-/* Allocate + init a Curve25519 (X25519) key */
+#define ECC_448_BIT_FIELD 56 // 448-bit curve field
+
+/* Allocate + init a CurveX448 (X25519) key */
 curve448_key* curve448_new(void) {
     curve448_key* k = (curve448_key*)XMALLOC(sizeof(curve448_key),
         NULL, DYNAMIC_TYPE_TMP_BUFFER);
@@ -31,7 +34,7 @@ int curve448_delete(curve448_key* k) {
 /* Generate a keypair (private+public) */
 int curve448_make_key(curve448_key* k, WC_RNG* rng) {
     if (k == NULL || rng == NULL) return BAD_FUNC_ARG;
-    return wc_curve448_make_key(rng, 32, k); /* 32 bytes for X25519 */
+    return wc_curve448_make_key(rng, ECC_448_BIT_FIELD, k); 
 }
 
 /* Export raw 32-byte public key */

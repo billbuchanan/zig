@@ -6,6 +6,8 @@ const c = @cImport({
     @cInclude("wolfssl/wolfcrypt/types.h");
     @cInclude("wolfssl/wolfcrypt/error-crypt.h");
     @cInclude("wolfssl/wolfcrypt/curve25519.h");
+    @cInclude("wolfssl/wolfcrypt/random.h");
+
 });
 
 fn wcOk(rc: c_int, what: []const u8) !void {
