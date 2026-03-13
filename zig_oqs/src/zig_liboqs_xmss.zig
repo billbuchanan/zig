@@ -54,32 +54,28 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    const msg: []const u8 = if (args.len >= 2) args[1] else "hello";
-    const alg_name: []const u8 = if (args.len >= 3) args[2] else "XMSS-SHA2_10_256";
+    const msg: []const u8 = args[1];
+    const alg_name: []const u8 = args[2];
 
     // MUST be NUL-terminated
     const alg_z = try std.fmt.allocPrint(allocator, "{s}", .{alg_name});
     defer allocator.free(alg_z);
 
-    try stdout.print("Algorithm: {s}\n", .{alg_name});
-    try stdout.print("Message:   {s}\n", .{msg});
-    try stdout.flush();
-
     if (c.OQS_SIG_STFL_alg_is_enabled(alg_z.ptr) != 1) {
-        stdout.print("XMSS algorithm not enabled in this liboqs build: {s}\n", .{alg_name});
+        try stdout.print("XMSS algorithm not enabled in this liboqs build: {s}\n", .{alg_name});
         return error.AlgorithmUnavailable;
     }
 
     const sig = c.OQS_SIG_STFL_new(alg_z.ptr);
     if (sig == null) {
-        stdout.print("OQS_SIG_STFL_new failed for: {s}\n", .{alg_name});
+        try stdout.print("OQS_SIG_STFL_new failed for: {s}\n", .{alg_name});
         return error.AlgorithmUnavailable;
     }
     defer c.OQS_SIG_STFL_free(sig);
 
     const sk = c.OQS_SIG_STFL_SECRET_KEY_new(alg_z.ptr);
     if (sk == null) {
-        stdout.print("OQS_SIG_STFL_SECRET_KEY_new failed for: {s}\n", .{alg_name});
+        try stdout.print("OQS_SIG_STFL_SECRET_KEY_new failed for: {s}\n", .{alg_name});
         return error.OutOfMemory;
     }
     defer c.OQS_SIG_STFL_SECRET_KEY_free(sk);
@@ -142,6 +138,10 @@ pub fn main() !void {
 
     const sk_preview_len: usize = @min(sk_buf_len, 100);
     const sig_preview_len: usize = @min(signature_len, 100);
+
+    try stdout.print("Algorithm: {s}\n", .{alg_name});
+    try stdout.print("Message:   {s}\n", .{msg});
+    try stdout.flush();
 
     try stdout.print("Private key (first {d} bytes): {x} Length: {d}\n\n", .{
         sk_preview_len,

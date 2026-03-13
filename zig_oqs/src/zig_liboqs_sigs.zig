@@ -48,8 +48,6 @@ pub fn main() !void {
 
     // Generate Keypair (sk - private, pk -public)
     try oqsCheck(c.OQS_SIG_keypair(sig_obj, pk.ptr, sk.ptr), "OQS_SIG_keypair");
-    try stdout.print("Verify 5\n", .{});
-    try stdout.flush();
 
     // Sign a message with the private key (sk)
     var signature = try allocator.alloc(u8, sig_len_max);
@@ -76,11 +74,11 @@ pub fn main() !void {
 
     if (pk_len > 200) {
         try stdout.print("Public key (first 200 bytes): {x} Length: {d}\n\n", .{ pk[0..200], pk_len });
-    } else try stdout.print("Private key: {x} Length: {d}\n\n", .{ pk, pk_len });
+    } else try stdout.print("Public key: {x} Length: {d}\n\n", .{ pk, pk_len });
 
     if (sig_len > 200) {
         try stdout.print("Signature (first 200 bytes): {x} Length: {d}\n\n", .{ signature[0..200], sig_len });
-    } else try stdout.print("Private key: {x} Length: {d}\n\n", .{ signature, sig_len });
+    } else try stdout.print("Signature key: {x} Length: {d}\n\n", .{ signature, sig_len });
 
     try stdout.print("Verify: {s}\n\n", .{if (ok) "OK" else "FAIL"});
 

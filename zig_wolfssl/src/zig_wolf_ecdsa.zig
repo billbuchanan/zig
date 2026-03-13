@@ -15,18 +15,37 @@ fn wcOk(rc: c_int, what: []const u8) !void {
     return error.WolfCryptError;
 }
 
-fn printHex(w: anytype, label: []const u8, data: []const u8) !void {
-    try w.print("{s} ({d} bytes): ", .{ label, data.len });
-    for (data) |b| try w.print("{x:0>2}", .{b});
-    try w.writeByte('\n');
-}
+// Opaque handle (Zig never sees ecc_key/ecc_point)
+const EcdsaKeyHandle = opaque {};
+extern fn ecdsa_key_new() ?*EcdsaKeyHandle;
+extern fn ecdsa_key_free(h: ?*EcdsaKeyHandle) c_int;
+extern fn ecdsa_key_make_p256(h: ?*EcdsaKeyHandle, rng: ?*c.WC_RNG) c_int;
+extern fn ecdsa_export_public_x963(h: ?*EcdsaKeyHandle, out: [*c]u8, outLen: [*c]c.word32) c_int;
+extern fn ecdsa_export_private_scalar(h: ?*EcdsaKeyHandle, out: [*c]u8, outLen: [*c]c.word32) c_int;
+extern fn ecdsa_sign_message(
+    h: ?*EcdsaKeyHandle,
+    rng: ?*c.WC_RNG,
+    msg: [*c]const u8,
+    msgLen: c.word32,
+    sig: [*c]u8,
+    sigLen: [*c]c.word32,
+) c_int;
+
+extern fn ecdsa_verify_message(
+    h: ?*EcdsaKeyHandle,
+    msg: [*c]const u8,
+    msgLen: c.word32,
+    sig: [*c]const u8,
+    sigLen: c.word32,
+    verifyRes: [*c]c_int,
+) c_int;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    // Zig 0.15.2 stdout writer pattern (works fine in 0.15.x)
+    // Zig 0.15.2 stdout writer pattern
     var stdout_buffer: [8192]u8 = undefined;
     var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
     const out = &stdout_writer.interface;
@@ -34,52 +53,50 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    const msg: []const u8 = if (args.len >= 2) args[1] else "Hello ECDSA from Zig + wolfSSL";
+    const msg = args[1];
 
     // RNG
     var rng: c.WC_RNG = undefined;
     try wcOk(c.wc_InitRng(&rng), "wc_InitRng");
     defer _ = c.wc_FreeRng(&rng);
 
-    // Generate ECC key (P-256)
-    var key: c.ecc_key = undefined;
-    try wcOk(c.wc_ecc_init(&key), "wc_ecc_init");
-    defer c.wc_ecc_free(&key);
+    // Key handle
+    const key = ecdsa_key_new() orelse return error.OutOfMemory;
+    defer _ = ecdsa_key_free(key);
 
-    // size=32 => P-256. (wolfCrypt chooses curve based on size)
-    try wcOk(c.wc_ecc_make_key(&rng, 32, &key), "wc_ecc_make_key(P-256)");
+    try wcOk(ecdsa_key_make_p256(key, &rng), "Make ECDSA key");
 
-    // Hash message with SHA-256 (ECDSA signs hashes)
-    var sha: c.Sha256 = undefined;
-    try wcOk(c.wc_InitSha256(&sha), "wc_InitSha256");
-    defer _ = c.wc_Sha256Free(&sha);
+    // Export to a public key using X9.63
+    var public: [128]u8 = undefined;
+    var pub_len: c.word32 = public.len;
+    try wcOk(ecdsa_export_public_x963(key, public[0..].ptr, &pub_len), "Export public key as X963");
 
-    try wcOk(c.wc_Sha256Update(&sha, msg.ptr, @intCast(msg.len)), "wc_Sha256Update");
+    // Export private key (priv)
+    var priv: [66]u8 = undefined; // enough for P-256 (32 bytes)
+    var priv_len: c.word32 = priv.len;
+    try wcOk(ecdsa_export_private_scalar(key, priv[0..].ptr, &priv_len), "Export private key as a scalar");
 
-    var digest: [c.SHA256_DIGEST_SIZE]u8 = undefined;
-    try wcOk(c.wc_Sha256Final(&sha, &digest), "wc_Sha256Final");
-
-    // Sign digest. Allocate a buffer big enough for DER signature.
-    // For P-256, 80 bytes is safely above the max DER-encoded ECDSA signature size.
-    var sig: [80]u8 = undefined;
+    // Sign message with DER signature
+    var sig: [128]u8 = undefined;
     var sig_len: c.word32 = sig.len;
-
     try wcOk(
-        c.wc_ecc_sign_hash(digest[0..].ptr, digest.len, &sig, &sig_len, &rng, &key),
-        "wc_ecc_sign_hash",
+        ecdsa_sign_message(key, &rng, msg.ptr, @intCast(msg.len), sig[0..].ptr, &sig_len),
+        "sign message",
     );
 
-    // Verify
+    // Verify signature
     var verify_res: c_int = 0;
     try wcOk(
-        c.wc_ecc_verify_hash(sig[0..sig_len].ptr, sig_len, digest[0..].ptr, digest.len, &verify_res, &key),
-        "wc_ecc_verify_hash",
+        ecdsa_verify_message(key, msg.ptr, @intCast(msg.len), sig[0..].ptr, sig_len, &verify_res),
+        "verify message",
     );
 
-    try out.print("Message: {s}\n", .{msg});
-    try out.print("Verify: {s}\n\n", .{if (verify_res == 1) "OK" else "FAIL"});
-    try printHex(out, "SHA-256(msg)", digest[0..]);
-    try printHex(out, "ECDSA signature (DER)", sig[0..@intCast(sig_len)]);
+    try out.print("== ECDSA with P-256 and SHA-256 ==\n\n", .{});
+    try out.print("Message: {s}\n\n", .{msg});
+    try out.print("Private key: {x} Length: {d}\n\n", .{ priv[0..priv_len], priv_len });
+    try out.print("Public key: {x} Length: {d}\n\n", .{ public[0..pub_len], pub_len });
+    try out.print("Signature: {x} Length: {d}\n\n", .{ sig[0..sig_len], sig_len });
+    if (verify_res == 1) try out.print("Signature Verified\n\n", .{});
 
     try out.flush();
 }
